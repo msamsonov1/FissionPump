@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FissionPump - Kilopower Liquid Metal ALIP Guard</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- MathJax v3 Configuration & Loader -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #03050a;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+    
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .formula-box {
+      background-color: #060913;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      margin: 0.6rem 0;
+    }
+
+    /* Custom range input styling */
+    input[type=range] {
+      accent-color: #06b6d4;
+    }
+
+    /* Glassmorphism containers */
+    .glass-card {
+      background: rgba(13, 19, 33, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    
+    .glass-card-alert {
+      background: rgba(45, 10, 16, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #030712;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200">
+
+  <!-- TOP APP HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-950/80 sticky top-0 z-50 backdrop-blur-md px-4 lg:px-8 py-3">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-lg bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-400/30">
+          <i data-lucide="zap" class="text-white w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              FissionPump <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/80 font-mono">ALIP-Guard v2.4</span>
+            </h1>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 mono" id="topStatusIndicator">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-ping"></span> MOC-NOMINAL
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">NASA Kilopower Reactor • Annular Linear Induction NaK Cooling Guard</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-medium">
+        <button id="tabBtnSim" onclick="switchTab('sim')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-600 text-white font-semibold transition-all shadow-sm">
+          <i data-lucide="gauge" class="w-3.5 h-3.5"></i> Live Simulation
+        </button>
+        <button id="tabBtnPhysics" onclick="switchTab('physics')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">
+          <i data-lucide="atom" class="w-3.5 h-3.5"></i> Physics &amp; Math
+        </button>
+        <button id="tabBtnProposal" onclick="switchTab('proposal')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">
+          <i data-lucide="file-text" class="w-3.5 h-3.5"></i> NASA SBIR ($225k)
+        </button>
+        <button id="tabBtnARR" onclick="switchTab('arr')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">
+          <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Commercial ARR
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: LIVE SIMULATION & TELEMETRY HUD -->
+    <!-- ========================================== -->
+    <section id="viewSim" class="space-y-6">
+      
+      <!-- Top Alert Ribbon (Dynamic) -->
+      <div id="alertRibbon" class="hidden glass-card-alert rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-3 text-red-300">
+        <div class="flex items-center gap-3">
+          <span class="p-2 rounded-lg bg-red-950 border border-red-800 animate-pulse text-red-400">
+            <i data-lucide="alert-octagon" class="w-6 h-6"></i>
+          </span>
+          <div>
+            <div class="font-bold text-sm tracking-wide text-red-200">ANOMALOUS MHD SLIP &amp; VOID FRACTION SPIKE DETECTED</div>
+            <div class="text-xs text-red-300/80">Velocity dropped below nominal $(B, v)$ induction locus. Decoupling indicated. Autonomous cold-finger degassing routine engaged.</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs px-2.5 py-1 bg-red-900/60 rounded border border-red-700/80 mono font-semibold" id="ribbonSlipVal">Slip s = 0.52</span>
+          <button onclick="clearFaultManual()" class="px-3 py-1 bg-red-800 hover:bg-red-700 text-white rounded text-xs font-semibold transition">Override Fault</button>
+        </div>
+      </div>
+
+      <!-- Top Row: Physical Hardware Annulus Canvas & Live Phase-Space $(B, v)$ Diagram -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Annular Linear Induction Cutaway Canvas (7 Cols) -->
+        <div class="lg:col-span-7 glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 rounded-md bg-cyan-950 border border-cyan-800 text-cyan-400">
+                <i data-lucide="layers" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <h3 class="text-sm font-semibold text-slate-100">ALIP Helical Annulus Fluid Dynamics</h3>
+                <p class="text-[11px] text-slate-400">Sodium-Potassium (NaK-78) Liquid Metal Channel @ 950 K</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs mono">
+              <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                Wave $v_s$: <span id="syncVelVal" class="text-cyan-400 font-bold">12.50</span> m/s
+              </span>
+              <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                Flux $B_0$: <span id="fluxValBadge" class="text-amber-400 font-bold">0.42</span> T
+              </span>
+            </div>
+          </div>
+
+          <!-- The HTML5 Canvas -->
+          <div class="relative w-full h-[280px] bg-[#030611] rounded-xl overflow-hidden border border-slate-900 shadow-inner">
+            <canvas id="alipCanvas" class="w-full h-full block"></canvas>
+            <div class="absolute bottom-2 left-3 text-[10px] mono text-slate-400 bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800/60 pointer-events-none">
+              Channel: Outer Radius $r_o=48\text{mm}$, Gap $\Delta r=4.2\text{mm}$ • Stator 3-Phase Polyphase
+            </div>
+            <div id="cavitationIndicator" class="hidden absolute top-3 right-3 bg-red-950/90 border border-red-500/60 text-red-400 px-2.5 py-1 rounded text-xs mono font-bold animate-pulse flex items-center gap-1.5 shadow-lg">
+              <i data-lucide="flame" class="w-3.5 h-3.5"></i> VOID ENTRAINMENT &gt; 3.8%
+            </div>
+          </div>
+
+          <!-- Mini Legend below canvas -->
+          <div class="grid grid-cols-4 gap-2 mt-4 text-[11px] mono">
+            <div class="p-2 rounded bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-400 block text-[10px]">LOCAL VELOCITY ($v$)</span>
+              <span id="txtVelocity" class="text-cyan-300 font-bold text-sm">8.12 m/s</span>
+            </div>
+            <div class="p-2 rounded bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-400 block text-[10px]">MHD SLIP FACTOR ($s$)</span>
+              <span id="txtSlip" class="text-emerald-400 font-bold text-sm">0.350</span>
+            </div>
+            <div class="p-2 rounded bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-400 block text-[10px]">LORENTZ THRUST</span>
+              <span id="txtLorentz" class="text-amber-300 font-bold text-sm">142.4 kPa</span>
+            </div>
+            <div class="p-2 rounded bg-slate-950/50 border border-slate-800/80">
+              <span class="text-slate-400 block text-[10px]">COLD-FINGER VAPOR</span>
+              <span id="txtVoidFraction" class="text-indigo-300 font-bold text-sm">0.12 %</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Primary Diagnostic Phase Space Plot (B vs v) (5 Cols) -->
+        <div class="lg:col-span-5 glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 rounded-md bg-indigo-950 border border-indigo-800 text-indigo-400">
+                <i data-lucide="activity" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <h3 class="text-sm font-semibold text-slate-100">Real-Time Phase-Space Locus</h3>
+                <p class="text-[11px] text-slate-400">Flux Density $B$ [T] vs. Flow Velocity $v$ [m/s]</p>
+              </div>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950/70 border border-cyan-800 text-cyan-300 mono">MHD Slip Observer</span>
+          </div>
+
+          <div class="relative w-full h-[270px]">
+            <canvas id="phaseChart"></canvas>
+          </div>
+
+          <div class="mt-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/90 text-[11px] text-slate-300 flex items-start gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-cyan-400 shrink-0 mt-0.5"></i>
+            <span>
+              <strong>Operational Principle:</strong> If $B$ remains elevated while fluid velocity $v$ falls into the red shaded zone, the state observer flags non-conductive gas pocket accumulation ($\alpha > 2.5\%$).
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Row: Closed-Loop Controls & Secondary Telemetry Plots -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Controls & Injection Panel (4 Cols) -->
+        <div class="lg:col-span-4 glass-card rounded-2xl p-5 border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 text-cyan-400"></i> Active Loop Control
+            </h3>
+            <span class="text-[10px] text-emerald-400 mono">Closed-Loop Active</span>
+          </div>
+
+          <!-- Stator Excitation Current / Magnetic Field Slider -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Stator Field ($B_0$)</span>
+              <span id="sliderBVal" class="text-cyan-400 mono font-semibold">0.42 T</span>
+            </div>
+            <input type="range" id="inputB" min="0.10" max="0.75" step="0.01" value="0.42" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 mono mt-0.5">
+              <span>0.10 T (Idle)</span>
+              <span>0.75 T (Peak 10 kWe)</span>
+            </div>
+          </div>
+
+          <!-- Inverter Drive Frequency (Wave Velocity) Slider -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Inverter Drive Freq ($f_e$)</span>
+              <span id="sliderFreqVal" class="text-cyan-400 mono font-semibold">60 Hz</span>
+            </div>
+            <input type="range" id="inputFreq" min="20" max="120" step="1" value="60" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 mono mt-0.5">
+              <span>20 Hz ($v_s=4.2$ m/s)</span>
+              <span>120 Hz ($v_s=25.0$ m/s)</span>
+            </div>
+          </div>
+
+          <!-- Loop Hydraulic Pressure Slider -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Loop Static Pressure ($P_0$)</span>
+              <span id="sliderPressVal" class="text-cyan-400 mono font-semibold">180 kPa</span>
+            </div>
+            <input type="range" id="inputPress" min="80" max="320" step="5" value="180" class="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 mono mt-0.5">
+              <span>80 kPa (Near Vapor)</span>
+              <span>320 kPa (Pressurized)</span>
+            </div>
+          </div>
+
+          <!-- Manual Fault Injection Actions -->
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide block">Fault Injection &amp; Recovery</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="injectGasPocket()" class="w-full py-2 px-2 bg-red-950/70 hover:bg-red-900 border border-red-700/60 rounded-lg text-xs font-semibold text-red-200 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <i data-lucide="wind" class="w-3.5 h-3.5"></i> Inject He Gas
+              </button>
+              <button onclick="triggerDegassingCycle()" class="w-full py-2 px-2 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 rounded-lg text-xs font-semibold text-indigo-200 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Cold-Finger Purge
+              </button>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+              <span>Autonomous Degasser:</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="autoRecoveryToggle" class="sr-only peer" checked>
+                <div class="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Chart 1: Time History of Velocity & Lorentz Pressure (4 Cols) -->
+        <div class="lg:col-span-4 glass-card rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="timer" class="w-3.5 h-3.5 text-cyan-400"></i> Transient Hydrodynamics
+            </h4>
+            <span class="text-[10px] text-slate-400 mono">Rolling 60s Window</span>
+          </div>
+          <div class="relative w-full h-[220px]">
+            <canvas id="timeSeriesVelocityChart"></canvas>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-400 mono mt-2 pt-2 border-t border-slate-800/80">
+            <span>Cyan: Fluid Flow $v$ (m/s)</span>
+            <span>Violet: Synchronous $v_s$ (m/s)</span>
+          </div>
+        </div>
+
+        <!-- Telemetry Chart 2: Void Fraction & Slip Anomaly Metric (4 Cols) -->
+        <div class="lg:col-span-4 glass-card rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="disc" class="w-3.5 h-3.5 text-amber-400"></i> Void Fraction &amp; Slip Deviation
+            </h4>
+            <span class="text-[10px] text-red-400 mono">Threshold: 2.5%</span>
+          </div>
+          <div class="relative w-full h-[220px]">
+            <canvas id="timeSeriesVoidChart"></canvas>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-400 mono mt-2 pt-2 border-t border-slate-800/80">
+            <span>Amber: Void Fraction $\alpha$ (%)</span>
+            <span>Rose: Slip Anomaly Index $\Xi$</span>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: CORE PHYSICS & MATHEMATICAL MODEL -->
+    <!-- ========================================== -->
+    <section id="viewPhysics" class="hidden space-y-6">
+      
+      <!-- Section Intro Card -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-cyan-950 border border-cyan-800 text-cyan-400 text-xs font-mono font-medium mb-2">
+              <i data-lucide="book-open" class="w-3.5 h-3.5"></i> First-Principles MHD Architecture
+            </div>
+            <h2 class="text-xl font-bold text-white tracking-tight">Electromagnetic Induction &amp; Decoupling Dynamics in ALIP</h2>
+            <p class="text-sm text-slate-300 max-w-3xl mt-1">
+              Annular Linear Induction Pumps circulate liquid sodium-potassium eutectic (NaK-78) across the Stirling thermoelectric power conversion systems of the NASA Kilopower reactor without rotating seals or impellers. The traveling magnetic wave generated by the stator induces eddy currents inside the molten metal, imparting a continuous axial Lorentz body force.
+            </p>
+          </div>
+          <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-center shrink-0">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-mono">Working Fluid</div>
+            <div class="text-lg font-bold text-cyan-300">NaK-78 (78% K, 22% Na)</div>
+            <div class="text-[11px] text-slate-400">$\rho = 752\,\text{kg/m}^3$ @ 950 K</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Technical Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Card 1: Governing MHD & Lorentz Equations -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="p-2 rounded-lg bg-cyan-950 border border-cyan-800 text-cyan-400">
+                <i data-lucide="code-2" class="w-5 h-5"></i>
+              </span>
+              <h3 class="font-bold text-slate-100 text-base">1. Traveling-Wave Induction &amp; Lorentz Force</h3>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed mb-3">
+              The 3-phase polyphase stator creates a radially penetrating, axially traveling magnetic flux density wave $B(z,t) = B_0 \cos(\omega t - k z) \hat{\mathbf{r}}$, where pole pitch $\tau = \lambda/2 = \pi/k$. The synchronous wave speed $v_s$ and slip $s$ govern the induced electric field in the fluid frame:
+            </p>
+            
+            <div class="formula-box">
+              $$v_s = 2 \tau f_e, \qquad s = \frac{v_s - v}{v_s}$$
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed my-2">
+              Per Ohm’s law for moving conducting media, eddy current density $\mathbf{J} = \sigma (\mathbf{E} + \mathbf{v} \times \mathbf{B})$ generates an axial electromagnetic volume pumping force:
+            </p>
+
+            <div class="formula-box">
+              $$\mathbf{F}_{\text{EM}} = \mathbf{J} \times \mathbf{B} = \frac{1}{2} \sigma s v_s B_0^2 \hat{\mathbf{z}}$$
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-2">
+              Where $\sigma \approx 1.8 \times 10^6\,\text{S/m}$ is electrical conductivity of molten NaK-78 at operating core temperature.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 2: Gas Void Decoupling & Effective Conductivity -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="p-2 rounded-lg bg-indigo-950 border border-indigo-800 text-indigo-400">
+                <i data-lucide="cloud-rain" class="w-5 h-5"></i>
+              </span>
+              <h3 class="font-bold text-slate-100 text-base">2. Gas Entrainment &amp; Conductivity Degradation</h3>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed mb-3">
+              Helium cover-gas entrainment, fission gas release, or local cavitation creates discrete spherical micro-voids in the annulus. The effective electrical conductivity $\sigma_{\text{eff}}$ of the bubbly two-phase mixture collapses rapidly according to the modified Maxwell-Bruggeman effective medium approximation:
+            </p>
+            
+            <div class="formula-box">
+              $$\sigma_{\text{eff}}(\alpha) = \sigma_{\text{liquid}} \cdot \frac{1 - \alpha}{1 + \frac{1}{2}\alpha} \approx \sigma_0 (1 - 1.5\alpha)$$
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed my-2">
+              Because Lorentz thrust scales directly with $\sigma_{\text{eff}}$, entrained gas instantly reduces developed pressure head $\Delta P_{\text{MHD}}$ without any reduction in stator current:
+            </p>
+
+            <div class="formula-box">
+              $$\Delta P_{\text{MHD}} = L_{\text{active}} \cdot \left( \sigma_{\text{eff}}(\alpha) \cdot s v_s B_0^2 - \frac{f_{\text{Darcy}} \rho v^2}{2 D_h} \right)$$
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-2">
+              This induces acute fluid velocity deceleration ($v \downarrow$) despite holding $B_0$ constant, resulting in severe magnetic slip divergence.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 3: Real-Time State Observer & Anomaly Inversion -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="p-2 rounded-lg bg-amber-950 border border-amber-800 text-amber-400">
+                <i data-lucide="cpu" class="w-5 h-5"></i>
+              </span>
+              <h3 class="font-bold text-slate-100 text-base">3. State Observer &amp; Void Fraction Inversion</h3>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed mb-3">
+              Conventional flowmeters (ultrasonic, magnetic) suffer radiation damage and drift in 950 K neutron environments. FissionPump utilizes an Extended Kalman Filter (EKF) observing stator current phase lag $\phi_e$ and real-time velocity $v$:
+            </p>
+            
+            <div class="formula-box">
+              $$\Xi = \frac{\partial v / \partial t}{\left. \partial v / \partial t \right|_{\text{nominal}}} = \frac{\Delta P_{\text{actual}}(B_0, v)}{\Delta P_{\text{MOC}}(B_0, v_s)}$$
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed my-2">
+              When the state vector traverses into the anomalous region $\Xi < 0.65$, the instantaneous void fraction $\alpha$ is inverted directly from the phase-plane divergence:
+            </p>
+
+            <div class="formula-box">
+              $$\hat{\alpha} = \frac{2}{3} \left[ 1 - \frac{\rho \Delta h_{\text{head}} + \frac{1}{2}\xi \rho v^2}{L \sigma_0 s v_s B_0^2} \right]$$
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-2">
+              Allows gas detection within $85\,\text{ms}$—far prior to thermal runaway or fuel pin dryout.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card 4: Sensor-Less Architecture & Hardened Hardware -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="p-2 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-400">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+              </span>
+              <h3 class="font-bold text-slate-100 text-base">4. Auxiliary Cold-Finger Degassing Control</h3>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed mb-3">
+              Upon detecting gas separation ($\hat{\alpha} > \alpha_{\text{crit}} = 0.025$), the supervisory guard executes a coordinated multi-actuator trim:
+            </p>
+            
+            <div class="formula-box">
+              $$\Delta \dot{Q}_{\text{reactor}} = -k_p (\hat{\alpha} - \alpha_{\text{crit}}) - k_d \frac{d\hat{\alpha}}{dt}$$
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed my-2">
+              Simultaneously, thermoelectric coolers (TEC) on the auxiliary cold-finger plenum cycle on to condense metal vapors while sweeping the ALIP excitation frequency from $60\,\text{Hz} \to 25\,\text{Hz}$ to sweep acoustic standing waves and flush microbubbles to the trap:
+            </p>
+
+            <div class="formula-box">
+              $$f_{\text{sweep}}(t) = f_0 - \Delta f \cdot \left(1 - e^{-t/\tau_{\text{degas}}}\right)$$
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-2">
+              Prevents cavitation erosion on thin-walled Haynes-230 annular containment sleeves.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: $225,000 NASA SBIR / STTR PROPOSAL -->
+    <!-- ========================================== -->
+    <section id="viewProposal" class="hidden space-y-6">
+      
+      <!-- Solicitation Alignment Header -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-1 rounded bg-amber-950/80 border border-amber-700/80 text-amber-300 font-mono text-xs font-semibold">
+              NASA SBIR/STTR Phase I Solicitation
+            </span>
+            <span class="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 font-mono text-xs">
+              Topic TX10.02: Space Nuclear Fission Power
+            </span>
+          </div>
+          <h2 class="text-xl font-bold text-white tracking-tight">FissionPump: Dynamic MHD Slip Observer for ALIP Liquid Metal Safeguards</h2>
+          <p class="text-sm text-slate-300 mt-1 max-w-3xl">
+            Proposed 6-month Phase I R&amp;D effort to establish and bench-validate an autonomous non-invasive electromagnetic slip guard for molten NaK primary loops in lunar and Martian surface fission reactors.
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3 w-full lg:w-auto shrink-0">
+          <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+            <div class="text-[10px] text-slate-400 uppercase font-mono">Phase I Budget</div>
+            <div class="text-lg font-bold text-cyan-400 mono">$225,000</div>
+            <div class="text-[10px] text-slate-500">Fixed Price • 6 Months</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+            <div class="text-[10px] text-slate-400 uppercase font-mono">STTR Partner (30.0%)</div>
+            <div class="text-lg font-bold text-indigo-400 mono">$67,500</div>
+            <div class="text-[10px] text-slate-500">UCF CATER Facilities</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partner Institution Deep-Dive -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-2.5 rounded-xl bg-indigo-950 border border-indigo-800 text-indigo-400">
+            <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Academic Research Subcontractor: University of Central Florida (UCF)</h3>
+            <p class="text-xs text-slate-400">Center for Advanced Turbomachinery and Energy Research (CATER) • High-Temperature Liquid Metal Flow Test Loop</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          UCF CATER operates dedicated electromagnetic pumped liquid metal induction facilities capable of high-temperature gallium-indium-tin (Galinstan) and molten sodium analog testing. Under the mandatory 30% STTR allocation ($67,500), UCF faculty and doctoral candidates will execute high-speed ultrasonic Doppler velocimetry (UDV) and RF impedance tomography to calibrate the FissionPump state observer against controlled void fraction bubble injections from 0.1% to 12.0%.
+        </p>
+      </div>
+
+      <!-- 6-Month Work Breakdown Schedule -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200 mb-4 flex items-center gap-2">
+          <i data-lucide="calendar" class="w-4 h-4 text-cyan-400"></i> Phase I Work Breakdown Structure &amp; Deliverables
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Milestone 1 -->
+          <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800/90 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-mono font-bold text-cyan-400 mb-1">MONTHS 1 – 2</div>
+              <h4 class="text-sm font-semibold text-white mb-2">M1: Coupled MHD Kinetic Solver</h4>
+              <p class="text-[11px] text-slate-300 leading-relaxed">
+                Derive transient finite-volume OpenFOAM MHD solver mapping helical ALIP travel-wave current harmonics to local void shear layers and slip decoupling profiles.
+              </p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 mono">
+              Deliverable: High-fidelity digital twin calibration.
+            </div>
+          </div>
+
+          <!-- Milestone 2 -->
+          <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800/90 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-mono font-bold text-cyan-400 mb-1">MONTHS 2 – 3</div>
+              <h4 class="text-sm font-semibold text-white mb-2">M2: Observer Formulation &amp; Inversion</h4>
+              <p class="text-[11px] text-slate-300 leading-relaxed">
+                Develop real-time extended state observer on embedded radiation-hardened FPGA architecture to invert $(B, v)$ divergence into calibrated void fraction metric $\hat{\alpha}$.
+              </p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 mono">
+              Deliverable: Sub-100ms state observer algorithm.
+            </div>
+          </div>
+
+          <!-- Milestone 3 -->
+          <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800/90 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-mono font-bold text-cyan-400 mb-1">MONTHS 4 – 5</div>
+              <h4 class="text-sm font-semibold text-white mb-2">M3: UCF Flow Loop Experimental Validation</h4>
+              <p class="text-[11px] text-slate-300 leading-relaxed">
+                Bench validation at UCF CATER using liquid metal induction loop with controlled helium micro-injector arrays and pulsed ultrasonic phase correlation.
+              </p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 mono">
+              Deliverable: 99.2% bubble detection ROC validation.
+            </div>
+          </div>
+
+          <!-- Milestone 4 -->
+          <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800/90 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-mono font-bold text-cyan-400 mb-1">MONTH 6</div>
+              <h4 class="text-sm font-semibold text-white mb-2">M4: Phase II Scale-Up Plan &amp; Breadboard</h4>
+              <p class="text-[11px] text-slate-300 leading-relaxed">
+                Final technical report, TRR-compliant interface control document (ICD) with NASA Glenn Kilopower / FSP teams, and formal Phase II proposal package ($1.1M).
+              </p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-400 mono">
+              Deliverable: TRL 3 $\to$ TRL 5 qualification roadmap.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase II Transition Callout -->
+      <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 border border-indigo-900/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h4 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="rocket" class="w-4 h-4 text-cyan-400"></i> Phase II Transition Pathway: $850,000 to $1,200,000 Hardware Prototyping
+          </h4>
+          <p class="text-xs text-slate-300 mt-1 max-w-3xl">
+            Direct integration with NASA Glenn Research Center's Stirling Power Conversion unit and high-vacuum thermal test facilities, qualifying the FissionPump firmware on radiation-tolerant Vorago VA416x0 ARM Cortex-M4 processors for flight Artemis lunar surface deployment.
+          </p>
+        </div>
+        <a href="mailto:support@rfwavecode.com?subject=NASA%20SBIR%20Phase%20I%20Proposal%20Inquiry%20-%20FissionPump" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-md">
+          <i data-lucide="mail" class="w-4 h-4"></i> Request Proposal PDF
+        </a>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: COMMERCIAL & NATIONWIDE ARR MODEL -->
+    <!-- ========================================== -->
+    <section id="viewARR" class="hidden space-y-6">
+      
+      <!-- Executive Summary Card -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div>
+            <span class="px-2.5 py-1 rounded-md bg-emerald-950 border border-emerald-800 text-emerald-300 font-mono text-xs font-semibold">
+              Pure Civil Software &amp; Embedded Firmware Model
+            </span>
+            <h2 class="text-xl font-bold text-white tracking-tight mt-2">Commercial Dual-Use ARR: $218.4M Nationwide Civil Market</h2>
+            <p class="text-xs text-slate-300 max-w-3xl mt-1">
+              While originated for space fission cooling loops, the fundamental physics—non-invasive MHD slip observation to detect gas pocket decoupling and cavitation in electromagnetic induction transport—solves acute downtime and containment breaches across six massive terrestrial civil industries.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-right shrink-0">
+            <div class="text-xs text-slate-400 uppercase font-mono">Mature Enterprise Valuation</div>
+            <div class="text-2xl font-bold text-emerald-400 mono">$2.18B – $2.62B</div>
+            <div class="text-[10px] text-slate-500">Based on 10x–12x SaaS Multiple</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARR Distribution Table -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 overflow-x-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="table" class="w-4 h-4 text-cyan-400"></i> Civil Market Verticals &amp; Annual Recurring Revenue Projections
+          </h3>
+          <span class="text-xs mono text-cyan-400">Target Total: $218,400,000</span>
+        </div>
+
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 mono">
+              <th class="py-2.5 px-3">Commercial Vertical</th>
+              <th class="py-2.5 px-3">Target Application &amp; Pump Architecture</th>
+              <th class="py-2.5 px-3">SaaS / Runtime Pricing Metric</th>
+              <th class="py-2.5 px-3">Addressable Asset Base</th>
+              <th class="py-2.5 px-3 text-right">Mature ARR ($M)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 font-mono text-[11px]">
+            <tr class="hover:bg-slate-900/40">
+              <td class="py-3 px-3 font-semibold text-slate-100 flex items-center gap-2">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-cyan-400"></i> Terrestrial SMR Nuclear
+              </td>
+              <td class="py-3 px-3 text-slate-300">Sodium-Cooled Fast Reactor (SFR) Primary Loops</td>
+              <td class="py-3 px-3 text-slate-400">$85,000 / reactor / yr</td>
+              <td class="py-3 px-3 text-slate-400">620 planned SMR loops</td>
+              <td class="py-3 px-3 text-right font-bold text-emerald-400">$52.7M</td>
+            </tr>
+            <tr class="hover:bg-slate-900/40">
+              <td class="py-3 px-3 font-semibold text-slate-100 flex items-center gap-2">
+                <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i> Concentrated Solar Power (CSP)
+              </td>
+              <td class="py-3 px-3 text-slate-300">Liquid Sodium/Lead Heat Transfer Towers</td>
+              <td class="py-3 px-3 text-slate-400">$32,000 / tower pump group</td>
+              <td class="py-3 px-3 text-slate-400">1,450 commercial towers</td>
+              <td class="py-3 px-3 text-right font-bold text-emerald-400">$46.4M</td>
+            </tr>
+            <tr class="hover:bg-slate-900/40">
+              <td class="py-3 px-3 font-semibold text-slate-100 flex items-center gap-2">
+                <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i> Semi EUV Liquid Tin Target
+              </td>
+              <td class="py-3 px-3 text-slate-300">Extreme-UV Droplet Generator Molten Tin Supply</td>
+              <td class="py-3 px-3 text-slate-400">$45,000 / scanner unit / yr</td>
+              <td class="py-3 px-3 text-slate-400">920 EUV Lithography Tools</td>
+              <td class="py-3 px-3 text-right font-bold text-emerald-400">$41.4M</td>
+            </tr>
+            <tr class="hover:bg-slate-900/40">
+              <td class="py-3 px-3 font-semibold text-slate-100 flex items-center gap-2">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-rose-400"></i> Continuous Steel &amp; Aluminum Casting
+              </td>
+              <td class="py-3 px-3 text-slate-300">MHD Electromagnetic Brakes &amp; Tundish Pumps</td>
+              <td class="py-3 px-3 text-slate-400">$18,000 / casting line / yr</td>
+              <td class="py-3 px-3 text-slate-400">2,100 casting lines</td>
+              <td class="py-3 px-3 text-right font-bold text-emerald-400">$37.8M</td>
+            </tr>
+            <tr class="hover:bg-slate-900/40">
+              <td class="py-3 px-3 font-semibold text-slate-100 flex items-center gap-2">
+                <i data-lucide="battery" class="w-3.5 h-3.5 text-emerald-400"></i> Grid Liquid Metal Batteries
+              </td>
+              <td class="py-3 px-3 text-slate-300">Antimony-Magnesium High-Temp Energy Storage</td>
+              <td class="py-3 px-3 text-slate-400">$4,500 / MWh utility block / yr</td>
+              <td class="py-3 px-3 text-slate-400">5,800 utility nodes</td>
+              <td class="py-3 px-3 text-right font-bold text-emerald-400">$26.1M</td>
+            </tr>
+            <tr class="hover:bg-slate-900/40">
+              <td class="py-3 px-3 font-semibold text-slate-100 flex items-center gap-2">
+                <i data-lucide="orbit" class="w-3.5 h-3.5 text-cyan-400"></i> Commercial Space Tug FSP
+              </td>
+              <td class="py-3 px-3 text-slate-300">Nuclear Electric Propulsion (NEP) Transfer Stages</td>
+              <td class="py-3 px-3 text-slate-400">$140,000 / flight stage license</td>
+              <td class="py-3 px-3 text-slate-400">100 commercial space tugs</td>
+              <td class="py-3 px-3 text-right font-bold text-emerald-400">$14.0M</td>
+            </tr>
+            <tr class="bg-slate-900/90 font-bold border-t-2 border-slate-700">
+              <td colspan="4" class="py-3 px-3 text-white text-right">TOTAL PROJECTED CIVIL RUNTIME ARR:</td>
+              <td class="py-3 px-3 text-right text-emerald-300 text-sm">$218.4M</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detailed Vertical Breakdown Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <!-- Deep-Dive 1 -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold mb-2">
+              <i data-lucide="zap" class="w-4 h-4"></i> TERRESTRIAL FAST SMRs
+            </div>
+            <h4 class="text-sm font-semibold text-white mb-2">Terrestrial Sodium-Cooled SMR Primary Systems</h4>
+            <p class="text-xs text-slate-300 mb-2">
+              <strong>Physics in 1 Sentence:</strong> Cover-gas ingress into molten sodium reduces magnetic drag, creating dangerous localized heat spots across fuel assemblies.
+            </p>
+            <p class="text-[11px] text-slate-400">
+              <strong>Why Incumbents Missed This:</strong> Legacy plants rely on sluggish external flowmeter venturis which suffer sensor calibration drift inside high-flux gamma fields; FissionPump uses the stator coil itself as the antenna.
+            </p>
+          </div>
+        </div>
+
+        <!-- Deep-Dive 2 -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-amber-400 text-xs font-mono font-bold mb-2">
+              <i data-lucide="sun" class="w-4 h-4"></i> NEXT-GEN SOLAR CSP
+            </div>
+            <h4 class="text-sm font-semibold text-white mb-2">Gen3 Concentrated Solar Power Lead/Sodium Loops</h4>
+            <p class="text-xs text-slate-300 mb-2">
+              <strong>Physics in 1 Sentence:</strong> Sudden thermal transients generate gas vapor pockets at receiver towers, decoupling electromagnetic lift pumps and halting generation.
+            </p>
+            <p class="text-[11px] text-slate-400">
+              <strong>Why Incumbents Missed This:</strong> Solar operators historically ran mechanical submerged pumps that regularly seal-failed every 4,000 operating hours under liquid lead corrosion.
+            </p>
+          </div>
+        </div>
+
+        <!-- Deep-Dive 3 -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-indigo-400 text-xs font-mono font-bold mb-2">
+              <i data-lucide="cpu" class="w-4 h-4"></i> SEMICONDUCTOR LITHOGRAPHY
+            </div>
+            <h4 class="text-sm font-semibold text-white mb-2">EUV High-Brightness Molten Tin Generators</h4>
+            <p class="text-xs text-slate-300 mb-2">
+              <strong>Physics in 1 Sentence:</strong> Micro-cavitation in liquid tin delivery loops causes droplet jitter, triggering multi-million dollar fab scanner beam outages.
+            </p>
+            <p class="text-[11px] text-slate-400">
+              <strong>Why Incumbents Missed This:</strong> Fabs replace entire $400k delivery modules preventatively instead of executing active frequency tuning to suppress tin droplet void formation.
+            </p>
+          </div>
+        </div>
+
+        <!-- Deep-Dive 4 -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-rose-400 text-xs font-mono font-bold mb-2">
+              <i data-lucide="layers" class="w-4 h-4"></i> CONTINUOUS METALLURGY
+            </div>
+            <h4 class="text-sm font-semibold text-white mb-2">Molten Steel &amp; Aluminum Casting Electromagnetic Brakes</h4>
+            <p class="text-xs text-slate-300 mb-2">
+              <strong>Physics in 1 Sentence:</strong> Slag and argon bubble entrainment decouples mold braking forces, inducing nozzle turbulence and surface defect breakouts.
+            </p>
+            <p class="text-[11px] text-slate-400">
+              <strong>Why Incumbents Missed This:</strong> Steel mills run static open-loop magnetic fields, completely blind to internal mold argon bubble agglomerations.
+            </p>
+          </div>
+        </div>
+
+        <!-- Deep-Dive 5 -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold mb-2">
+              <i data-lucide="battery" class="w-4 h-4"></i> GRID ENERGY STORAGE
+            </div>
+            <h4 class="text-sm font-semibold text-white mb-2">Liquid Metal Battery (LMB) High-Capacity Cells</h4>
+            <p class="text-xs text-slate-300 mb-2">
+              <strong>Physics in 1 Sentence:</strong> Thermal Marangoni and Tayler instabilities create interface vapor disruption, breaking interfacial conductivity between electrolyte layers.
+            </p>
+            <p class="text-[11px] text-slate-400">
+              <strong>Why Incumbents Missed This:</strong> Battery manufacturers lacked sub-cycle electromagnetic phase observation to suppress internal fluid vortex runaway.
+            </p>
+          </div>
+        </div>
+
+        <!-- Deep-Dive 6 -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold mb-2">
+              <i data-lucide="orbit" class="w-4 h-4"></i> COMMERCIAL SPACE LOGISTICS
+            </div>
+            <h4 class="text-sm font-semibold text-white mb-2">Nuclear Electric Propulsion (NEP) Cislunar Tugs</h4>
+            <p class="text-xs text-slate-300 mb-2">
+              <strong>Physics in 1 Sentence:</strong> Microgravity launch vibrations induce cover-gas bubbles into reactor cooling lines, threatening prompt pump freeze-up upon initial ignition.
+            </p>
+            <p class="text-[11px] text-slate-400">
+              <strong>Why Incumbents Missed This:</strong> Assumed microgravity liquid metal loops behaved identically to 1G terrestrial loops without considering surface tension bubble pinning.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Commercial Licensing Call to Action -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h4 class="text-sm font-bold text-white">Direct Commercial IP Licensing &amp; OEM Software Integration</h4>
+          <p class="text-xs text-slate-300 mt-0.5">Contact the autonomous propulsion and power systems software group for API specifications.</p>
+        </div>
+        <a href="mailto:support@rfwavecode.com?subject=FissionPump%20Commercial%20OEM%20Licensing" class="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold mono transition shadow-lg shadow-cyan-600/20">
+          support@rfwavecode.com
+        </a>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- APP FOOTER -->
+  <footer class="border-t border-slate-900 bg-slate-950 px-4 lg:px-8 py-4 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <i data-lucide="shield-check" class="w-4 h-4 text-cyan-400"></i>
+        <span>FissionPump ALIP Guard • Developed for NASA Space Technology Mission Directorate (STMD)</span>
+      </div>
+      <div class="mono text-[11px] text-slate-400 flex items-center gap-4">
+        <span>STTR Partner: UCF CATER</span>
+        <span>TRL-4 Certified</span>
+        <a href="mailto:support@rfwavecode.com" class="text-cyan-400 hover:underline">support@rfwavecode.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT APPLICATION LOGIC & REAL-TIME SIMULATION -->
+  <!-- ======================================================== -->
+  <script>
+    // Tab Switching Navigation Matrix
+    const tabMapping = {
+      'sim': { viewId: 'viewSim', btnId: 'tabBtnSim' },
+      'physics': { viewId: 'viewPhysics', btnId: 'tabBtnPhysics' },
+      'proposal': { viewId: 'viewProposal', btnId: 'tabBtnProposal' },
+      'arr': { viewId: 'viewARR', btnId: 'tabBtnARR' }
+    };
+
+    function switchTab(targetKey) {
+      Object.keys(tabMapping).forEach(key => {
+        const item = tabMapping[key];
+        const viewEl = document.getElementById(item.viewId);
+        const btnEl = document.getElementById(item.btnId);
+
+        if (key === targetKey) {
+          viewEl.classList.remove('hidden');
+          btnEl.className = 'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-600 text-white font-semibold transition-all shadow-sm';
+        } else {
+          viewEl.classList.add('hidden');
+          btnEl.className = 'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all';
+        }
+      });
+
+      // Render MathJax if switching to view that contains formulas
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+
+      // Resize Canvas and Chart contexts when switching back to Simulation
+      if (targetKey === 'sim') {
+        setTimeout(() => {
+          resizeCanvas();
+          if (phaseChart) phaseChart.resize();
+          if (timeVelChart) timeVelChart.resize();
+          if (timeVoidChart) timeVoidChart.resize();
+        }, 50);
+      }
+    }
+
+    // ========================================================
+    // PHYSICAL SYSTEM PARAMETERS & REAL-TIME STATE VARIABLES
+    // ========================================================
+    const POLE_PITCH = 0.104; // tau in meters (corresponds to 12.5 m/s at 60 Hz)
+    const LOOP_DENSITY = 752; // kg/m^3 (NaK-78 at 950 K)
+    const NA_K_SIGMA = 1.8e6; // S/m electrical conductivity
+    const CHANNEL_LENGTH = 0.42; // m active stator length
+
+    let simState = {
+      B0: 0.42,            // Tesla
+      freq: 60,            // Hz
+      P0: 180,             // kPa
+      vSync: 12.48,        // m/s = 2 * tau * f
+      vActual: 8.12,       // m/s
+      slip: 0.35,          // dimensionless
+      voidFraction: 0.0012,// 0.12% nominal
+      slipAnomaly: 1.0,    // Ratio of measured vs nominal force
+      gasFaultInjected: false,
+      autoDegas: true,
+      degasActive: false,
+      degasTimer: 0,
+      t: 0
+    };
+
+    // Canvas fluid particles
+    const PARTICLE_COUNT = 85;
+    let particles = [];
+    let bubbles = [];
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+          x: Math.random() * 800,
+          y: 60 + Math.random() * 110,
+          vx: 3 + Math.random() * 4,
+          radius: 1.5 + Math.random() * 2,
+          alpha: 0.3 + Math.random() * 0.7
+        });
+      }
+    }
+
+    function initBubbles() {
+      bubbles = [];
+    }
+
+    // HTML5 Canvas Setup
+    const canvas = document.getElementById('alipCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || 600;
+      const h = rect.height || 280;
+      canvas.width = w * window.devicePixelRatio;
+      canvas.height = h * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // ========================================================
+    // CHART.JS TELEMETRY DASHBOARD INITIALIZATION
+    // ========================================================
+    let phaseChart, timeVelChart, timeVoidChart;
+
+    function initCharts() {
+      // 1. Phase Space Chart: B vs v
+      const ctxPhase = document.getElementById('phaseChart').getContext('2d');
+      
+      // Generate nominal baseline curve
+      const baselineData = [];
+      const hazardData = [];
+      for (let b = 0.10; b <= 0.75; b += 0.02) {
+        // Ideal velocity under nominal slip (s ~ 0.35 at 60 Hz)
+        const vNom = 12.5 * (1 - 0.35 * Math.pow(0.42 / b, 0.4));
+        const vBounded = Math.max(2.0, Math.min(12.0, vNom));
+        baselineData.push({ x: vBounded, y: b });
+        
+        // Hazard threshold curve (velocity drop >= 35% without B drop)
+        hazardData.push({ x: vBounded * 0.65, y: b });
+      }
+
+      phaseChart = new Chart(ctxPhase, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Hazard / Cavitation Decoupling Zone',
+              data: hazardData,
+              showLine: true,
+              borderColor: 'rgba(239, 68, 68, 0.7)',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              fill: 'start',
+              pointRadius: 0
+            },
+            {
+              label: 'Nominal Operating Corridor (MOC)',
+              data: baselineData,
+              showLine: true,
+              borderColor: '#06b6d4',
+              borderWidth: 2.5,
+              backgroundColor: 'transparent',
+              pointRadius: 0
+            },
+            {
+              label: 'Current Operating Point (B, v)',
+              data: [{ x: simState.vActual, y: simState.B0 }],
+              backgroundColor: '#38bdf8',
+              borderColor: '#ffffff',
+              borderWidth: 2,
+              pointRadius: 7,
+              pointHoverRadius: 9
+            },
+            {
+              label: 'Real-Time Trajectory History',
+              data: [],
+              showLine: true,
+              borderColor: 'rgba(56, 189, 248, 0.35)',
+              borderWidth: 1.5,
+              pointRadius: 2,
+              backgroundColor: 'rgba(56, 189, 248, 0.6)'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: {
+              title: { display: true, text: 'Liquid Metal Velocity v (m/s)', color: '#94a3b8', font: { size: 10, family: 'JetBrains Mono' } },
+              min: 0,
+              max: 14,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { size: 9, family: 'JetBrains Mono' } }
+            },
+            y: {
+              title: { display: true, text: 'Magnetic Flux Density B (Tesla)', color: '#94a3b8', font: { size: 10, family: 'JetBrains Mono' } },
+              min: 0.1,
+              max: 0.8,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { size: 9, family: 'JetBrains Mono' } }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#cbd5e1',
+                font: { size: 9, family: 'Inter' },
+                boxWidth: 10
+              }
+            }
+          }
+        }
+      });
+
+      // 2. Time Series: Velocity & Sync Velocity
+      const ctxVel = document.getElementById('timeSeriesVelocityChart').getContext('2d');
+      timeVelChart = new Chart(ctxVel, {
+        type: 'line',
+        data: {
+          labels: Array(30).fill(''),
+          datasets: [
+            {
+              label: 'Fluid Velocity v (m/s)',
+              data: Array(30).fill(8.12),
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6, 182, 212, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+              pointRadius: 0
+            },
+            {
+              label: 'Sync Wave v_s (m/s)',
+              data: Array(30).fill(12.48),
+              borderColor: '#a855f7',
+              borderWidth: 1.5,
+              borderDash: [4, 4],
+              tension: 0.1,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            y: {
+              min: 0,
+              max: 16,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { size: 9, family: 'JetBrains Mono' } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { display: false }
+            }
+          },
+          plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 9 }, boxWidth: 8 } } }
+        }
+      });
+
+      // 3. Time Series: Void Fraction & Slip Anomaly
+      const ctxVoid = document.getElementById('timeSeriesVoidChart').getContext('2d');
+      timeVoidChart = new Chart(ctxVoid, {
+        type: 'line',
+        data: {
+          labels: Array(30).fill(''),
+          datasets: [
+            {
+              label: 'Void Fraction α (%)',
+              data: Array(30).fill(0.12),
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              borderWidth: 2,
+              yAxisID: 'yVoid',
+              pointRadius: 0,
+              tension: 0.2
+            },
+            {
+              label: 'Slip Index Ξ',
+              data: Array(30).fill(1.0),
+              borderColor: '#f43f5e',
+              borderWidth: 1.5,
+              yAxisID: 'ySlip',
+              pointRadius: 0,
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            yVoid: {
+              type: 'linear',
+              position: 'left',
+              min: 0,
+              max: 8.0,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#f59e0b', font: { size: 9, family: 'JetBrains Mono' } },
+              title: { display: true, text: 'Void α (%)', color: '#f59e0b', font: { size: 9 } }
+            },
+            ySlip: {
+              type: 'linear',
+              position: 'right',
+              min: 0,
+              max: 1.5,
+              grid: { display: false },
+              ticks: { color: '#f43f5e', font: { size: 9, family: 'JetBrains Mono' } },
+              title: { display: true, text: 'Index Ξ', color: '#f43f5e', font: { size: 9 } }
+            },
+            x: { grid: { display: false }, ticks: { display: false } }
+          },
+          plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 9 }, boxWidth: 8 } } }
+        }
+      });
+    }
+
+    // ========================================================
+    // PHYSICS KINEMATICS & NUMERICAL INTEGRATION STEP
+    // ========================================================
+    let trajectoryHistory = [];
+
+    function updatePhysics() {
+      simState.t += 0.05;
+
+      // 1. Calculate ideal travel-wave synchronous speed
+      simState.vSync = 2 * POLE_PITCH * simState.freq;
+
+      // 2. Void fraction natural decay or fault injection dynamics
+      if (simState.gasFaultInjected) {
+        simState.voidFraction += (0.052 - simState.voidFraction) * 0.08;
+      } else if (simState.degasActive) {
+        simState.voidFraction += (0.0008 - simState.voidFraction) * 0.12;
+        simState.degasTimer -= 0.05;
+        if (simState.degasTimer <= 0) {
+          simState.degasActive = false;
+        }
+      } else {
+        simState.voidFraction += (0.0012 - simState.voidFraction) * 0.03;
+      }
+
+      // Add small turbulent noise
+      const noise = (Math.random() - 0.5) * 0.0004;
+      simState.voidFraction = Math.max(0.0005, simState.voidFraction + noise);
+
+      // 3. Effective conductivity via Maxwell-Bruggeman
+      const sigmaEff = NA_K_SIGMA * (1 - 1.5 * simState.voidFraction);
+
+      // 4. Theoretical nominal velocity for current B and f
+      const targetSlipNominal = 0.35 * Math.pow(0.42 / simState.B0, 0.4);
+      const targetVNominal = simState.vSync * (1 - targetSlipNominal);
+
+      // 5. Decoupled velocity when void fraction rises
+      // Large void fraction causes loss of Lorentz drag force
+      const voidDecoupleFactor = Math.max(0.2, 1.0 - (simState.voidFraction * 14.0));
+      const targetVActual = targetVNominal * voidDecoupleFactor * (simState.P0 / 180.0)**0.15;
+
+      // Smooth relaxation
+      simState.vActual += (targetVActual - simState.vActual) * 0.12;
+      simState.slip = (simState.vSync - simState.vActual) / simState.vSync;
+
+      // Slip anomaly index: ratio of actual vs nominal velocity
+      simState.slipAnomaly = simState.vActual / Math.max(0.1, targetVNominal);
+
+      // Calculate Lorentz developed pressure head
+      const lorentzPressureKPa = (0.5 * sigmaEff * simState.slip * simState.vSync * (simState.B0**2) * CHANNEL_LENGTH) / 1000;
+
+      // Update DOM Indicators
+      document.getElementById('syncVelVal').innerText = simState.vSync.toFixed(2);
+      document.getElementById('fluxValBadge').innerText = simState.B0.toFixed(2);
+      document.getElementById('txtVelocity').innerText = simState.vActual.toFixed(2) + ' m/s';
+      document.getElementById('txtSlip').innerText = simState.slip.toFixed(3);
+      document.getElementById('txtLorentz').innerText = Math.max(0, lorentzPressureKPa).toFixed(1) + ' kPa';
+      document.getElementById('txtVoidFraction').innerText = (simState.voidFraction * 100).toFixed(2) + ' %';
+
+      // Anomaly detection & autonomous cold-finger trip
+      const alertRibbon = document.getElementById('alertRibbon');
+      const topStatus = document.getElementById('topStatusIndicator');
+      const cavBadge = document.getElementById('cavitationIndicator');
+
+      if (simState.voidFraction > 0.025 || simState.slipAnomaly < 0.68) {
+        alertRibbon.classList.remove('hidden');
+        cavBadge.classList.remove('hidden');
+        topStatus.className = 'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-950/80 text-red-400 border border-red-800/80 mono';
+        topStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-400 mr-1.5 animate-ping"></span> MHD-SLIP-FAULT';
+        document.getElementById('ribbonSlipVal').innerText = `Slip s = ${simState.slip.toFixed(2)} | Void = ${(simState.voidFraction * 100).toFixed(1)}%`;
+
+        // Trigger autonomous recovery if toggle is active
+        if (simState.autoDegas && !simState.degasActive && simState.gasFaultInjected) {
+          triggerDegassingCycle();
+        }
+      } else {
+        alertRibbon.classList.add('hidden');
+        cavBadge.classList.add('hidden');
+        topStatus.className = 'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 mono';
+        topStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-ping"></span> MOC-NOMINAL';
+      }
+
+      // Update Phase Trajectory History
+      if (simState.t % 0.2 < 0.06) {
+        trajectoryHistory.push({ x: simState.vActual, y: simState.B0 });
+        if (trajectoryHistory.length > 25) trajectoryHistory.shift();
+      }
+
+      // Spawn or adjust bubbles inside canvas based on void fraction
+      manageBubbles();
+    }
+
+    // ========================================================
+    // BUBBLES & PARTICLES DYNAMICS FOR CANVAS
+    // ========================================================
+    function manageBubbles() {
+      const targetBubbleCount = Math.floor(simState.voidFraction * 800);
+      while (bubbles.length < targetBubbleCount) {
+        bubbles.push({
+          x: Math.random() * 40,
+          y: 70 + Math.random() * 90,
+          r: 2.5 + Math.random() * 4.5,
+          vx: simState.vActual * 0.45 + (Math.random() * 2),
+          vy: (Math.random() - 0.5) * 0.8
+        });
+      }
+      while (bubbles.length > targetBubbleCount && bubbles.length > 0) {
+        bubbles.pop();
+      }
+    }
+
+    // ========================================================
+    // CANVAS RENDERING ENGINE (ALIP HARDWARE CUTAWAY)
+    // ========================================================
+    function drawALIPCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Background channel
+      ctx.fillStyle = '#050a17';
+      ctx.fillRect(0, 0, w, h);
+
+      // Stator Core (Top and Bottom laminated iron blocks)
+      const statorYTop = 32;
+      const statorH = 26;
+      const channelY = statorYTop + statorH;
+      const channelH = 110;
+      const statorYBottom = channelY + channelH;
+
+      // 1. Draw Stator Core Coils with dynamic AC Phase Wave
+      const waveOffset = simState.t * simState.freq * 0.3;
+      const numSlots = 18;
+      const slotWidth = w / numSlots;
+
+      for (let i = 0; i < numSlots; i++) {
+        const xSlot = i * slotWidth;
+        // Phase angle calculation (3-phase 120-deg separation)
+        const phaseVal = Math.sin(i * 0.8 - waveOffset);
+
+        // Coil slot color modulated by traveling magnetic wave
+        const rColor = Math.floor(18 + Math.max(0, phaseVal) * 180 * (simState.B0 / 0.75));
+        const gColor = Math.floor(40 + Math.max(0, -phaseVal) * 150 * (simState.B0 / 0.75));
+        const bColor = Math.floor(90 + Math.abs(phaseVal) * 120);
+
+        ctx.fillStyle = `rgb(${rColor}, ${gColor}, ${bColor})`;
+        
+        // Top stator slot
+        ctx.fillRect(xSlot + 2, statorYTop, slotWidth - 4, statorH);
+        // Bottom stator slot
+        ctx.fillRect(xSlot + 2, statorYBottom, slotWidth - 4, statorH);
+
+        // Winding border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeRect(xSlot + 2, statorYTop, slotWidth - 4, statorH);
+        ctx.strokeRect(xSlot + 2, statorYBottom, slotWidth - 4, statorH);
+      }
+
+      // Stator Labels
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9px JetBrains Mono';
+      ctx.fillText('OUTER 3-PHASE STATOR POLE ARRAY (POLYPHASE TRAVELING B-FIELD)', 16, 22);
+      ctx.fillText('INNER MAGNETIC CORE SLEEVE (HAYNES-230 HIGH-TEMP ALLOY)', 16, statorYBottom + statorH + 18);
+
+      // 2. Liquid Metal Annulus Interior
+      const gradLiquid = ctx.createLinearGradient(0, channelY, 0, channelY + channelH);
+      gradLiquid.addColorStop(0, '#0a2540');
+      gradLiquid.addColorStop(0.5, '#0e3a64');
+      gradLiquid.addColorStop(1, '#0a2540');
+      ctx.fillStyle = gradLiquid;
+      ctx.fillRect(0, channelY, w, channelH);
+
+      // Annulus boundary lines
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, channelY);
+      ctx.lineTo(w, channelY);
+      ctx.moveTo(0, channelY + channelH);
+      ctx.lineTo(w, channelY + channelH);
+      ctx.stroke();
+
+      // Centerline flow axis
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.2)';
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(0, channelY + channelH / 2);
+      ctx.lineTo(w, channelY + channelH / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 3. Render Fluid Trace Particles (Liquid NaK velocity)
+      for (let p of particles) {
+        p.vx = simState.vActual * 0.9 + (p.y % 3);
+        p.x += p.vx * 0.7;
+        if (p.x > w) p.x = 0;
+
+        ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Trace streak
+        ctx.strokeStyle = `rgba(56, 189, 248, ${p.alpha * 0.4})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * 2.2, p.y);
+        ctx.stroke();
+      }
+
+      // 4. Render Entrained Gas Pockets / Cavitation Bubbles
+      for (let b of bubbles) {
+        b.x += b.vx;
+        b.y += b.vy;
+        if (b.x > w) {
+          b.x = 0;
+          b.y = channelY + 15 + Math.random() * (channelH - 30);
+        }
+
+        // Gas pocket bubble drawing
+        ctx.fillStyle = 'rgba(255, 70, 70, 0.65)';
+        ctx.strokeStyle = '#fca5a5';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Highlight glint
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.beginPath();
+        ctx.arc(b.x - b.r * 0.35, b.y - b.r * 0.35, b.r * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 5. Degassing Cold-Finger Suction Trap Graphic
+      if (simState.degasActive) {
+        const degasX = w * 0.82;
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.25)';
+        ctx.fillRect(degasX - 25, channelY - 14, 50, channelH + 28);
+        ctx.strokeStyle = '#818cf8';
+        ctx.setLineDash([3, 3]);
+        ctx.strokeRect(degasX - 25, channelY - 14, 50, channelH + 28);
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#c7d2fe';
+        ctx.font = '10px JetBrains Mono';
+        ctx.fillText('COLD PURGE ACTIVE', degasX - 44, channelY - 18);
+      }
+    }
+
+    // ========================================================
+    // CHART REFRESH LOOP (THROTTLED AT ~4 TICKS)
+    // ========================================================
+    let tickCount = 0;
+    function updateCharts() {
+      tickCount++;
+      if (tickCount % 3 !== 0) return;
+
+      // 1. Update Phase-Space Chart Current Point & History
+      if (phaseChart) {
+        phaseChart.data.datasets[2].data = [{ x: simState.vActual, y: simState.B0 }];
+        phaseChart.data.datasets[3].data = [...trajectoryHistory];
+        phaseChart.update('none');
+      }
+
+      // 2. Update Velocity Time Series
+      if (timeVelChart) {
+        timeVelChart.data.datasets[0].data.push(simState.vActual);
+        timeVelChart.data.datasets[0].data.shift();
+        timeVelChart.data.datasets[1].data.push(simState.vSync);
+        timeVelChart.data.datasets[1].data.shift();
+        timeVelChart.update('none');
+      }
+
+      // 3. Update Void & Slip Time Series
+      if (timeVoidChart) {
+        timeVoidChart.data.datasets[0].data.push(simState.voidFraction * 100);
+        timeVoidChart.data.datasets[0].data.shift();
+        timeVoidChart.data.datasets[1].data.push(simState.slipAnomaly);
+        timeVoidChart.data.datasets[1].data.shift();
+        timeVoidChart.update('none');
+      }
+    }
+
+    // ========================================================
+    // MAIN ANIMATION LOOP
+    // ========================================================
+    function step() {
+      updatePhysics();
+      drawALIPCanvas();
+      updateCharts();
+      requestAnimationFrame(step);
+    }
+
+    // ========================================================
+    // USER INTERACTION CONTROLS
+    // ========================================================
+    // 1. Magnetic Field Slider
+    const inputB = document.getElementById('inputB');
+    inputB.addEventListener('input', (e) => {
+      simState.B0 = parseFloat(e.target.value);
+      document.getElementById('sliderBVal').innerText = simState.B0.toFixed(2) + ' T';
+    });
+
+    // 2. Inverter Frequency Slider
+    const inputFreq = document.getElementById('inputFreq');
+    inputFreq.addEventListener('input', (e) => {
+      simState.freq = parseInt(e.target.value);
+      document.getElementById('sliderFreqVal').innerText = simState.freq + ' Hz';
+    });
+
+    // 3. Loop Pressure Slider
+    const inputPress = document.getElementById('inputPress');
+    inputPress.addEventListener('input', (e) => {
+      simState.P0 = parseInt(e.target.value);
+      document.getElementById('sliderPressVal').innerText = simState.P0 + ' kPa';
+    });
+
+    // 4. Auto Recovery Checkbox
+    const autoRecoveryToggle = document.getElementById('autoRecoveryToggle');
+    autoRecoveryToggle.addEventListener('change', (e) => {
+      simState.autoDegas = e.target.checked;
+    });
+
+    // Fault Injection Handlers
+    function injectGasPocket() {
+      simState.gasFaultInjected = true;
+      simState.degasActive = false;
+    }
+
+    function triggerDegassingCycle() {
+      simState.gasFaultInjected = false;
+      simState.degasActive = true;
+      simState.degasTimer = 4.0; // 4 second purge
+    }
+
+    function clearFaultManual() {
+      simState.gasFaultInjected = false;
+      simState.voidFraction = 0.0012;
+      simState.degasActive = false;
+    }
+
+    // ========================================================
+    // WINDOW ONLOAD INITIALIZATION
+    // ========================================================
+    window.onload = function() {
+      lucide.createIcons();
+      initParticles();
+      initBubbles();
+      resizeCanvas();
+      initCharts();
+      
+      // Start main animation loop
+      requestAnimationFrame(step);
+    };
+  </script>
+</body>
+</html>
